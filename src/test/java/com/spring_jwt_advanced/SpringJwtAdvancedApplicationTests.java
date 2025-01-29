@@ -1,4 +1,4 @@
-package com.spring_jwt_advanced.spring_jwt_advanced;
+package com.spring_jwt_advanced;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
