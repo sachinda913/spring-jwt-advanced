@@ -23,4 +23,9 @@ public class UserRepositoryImpl implements UserRepository{
 		return userCrudRepository.save(user);
 	}
 
+	@Override
+	public User findUserByUsername(String userName) {
+		return userCrudRepository.findUserByUsername(userName);
+	}
+
 }
