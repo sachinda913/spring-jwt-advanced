@@ -12,13 +12,16 @@ import javax.crypto.SecretKey;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import com.spring_jwt_advanced.config.Constants;
 import com.spring_jwt_advanced.service.JwtService;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class JwtServiceImpl implements JwtService{
@@ -43,7 +46,7 @@ public class JwtServiceImpl implements JwtService{
 				.add(claims)
 				.subject(userName)
 				.issuedAt(new Date(System.currentTimeMillis()))
-				.expiration(new Date(System.currentTimeMillis() + 60 * 60 * 10))
+				.expiration(new Date(Constants.ACCESS_TOKEN_EXPIRY_SECONDS))
 				.and()
 				.signWith(getkey())
 				.compact();
@@ -57,6 +60,10 @@ public class JwtServiceImpl implements JwtService{
 	@Override
 	public String extractUserName(String token) {
 		return extractClaim(token , Claims::getSubject);
+	}
+	
+	public Date extractExpirationFromClaims(String token) {
+		return extractClaim(token , Claims::getExpiration);
 	}
 
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
@@ -81,9 +88,16 @@ public class JwtServiceImpl implements JwtService{
 	private boolean isTokenExpired(String token) {
 		return extractExpirationFromClaims(token).before(new Date());
 	}
-
-	private Date extractExpirationFromClaims(String token) {
-		return extractClaim(token , Claims::getExpiration);
+	
+	public String extractTokenFromRequst(HttpServletRequest request) {
+		
+		String authHeader = request.getHeader("Authorization");
+		if(StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+			return authHeader.substring(7);			
+		}
+		return null;
+		
 	}
+
 
 }

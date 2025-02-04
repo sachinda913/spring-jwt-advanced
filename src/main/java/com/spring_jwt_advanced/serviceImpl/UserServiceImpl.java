@@ -10,12 +10,20 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.spring_jwt_advanced.entity.RefreshToken;
 import com.spring_jwt_advanced.entity.Role;
 import com.spring_jwt_advanced.entity.User;
 import com.spring_jwt_advanced.repository.RoleRepository;
 import com.spring_jwt_advanced.repository.UserRepository;
+import com.spring_jwt_advanced.response.AuthResponse;
+import com.spring_jwt_advanced.response.JwtResponse;
+import com.spring_jwt_advanced.response.RefreshTokenResponse;
 import com.spring_jwt_advanced.response.UserResponse;
+import com.spring_jwt_advanced.service.RefreshTokenService;
+import com.spring_jwt_advanced.service.TokenBlackListService;
 import com.spring_jwt_advanced.service.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -34,7 +42,13 @@ public class UserServiceImpl implements UserService{
 	@Autowired
 	private RoleRepository roleRepository;
 	
-	private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+	@Autowired
+	private RefreshTokenService refreshTokenService;
+	
+	@Autowired
+	private TokenBlackListService tokenBlackListService;
+		
+	private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();	
 
 	@Override
 	public User createUser(UserResponse userResponse) {
@@ -52,15 +66,44 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public String loginAndGenerateToken(User user) {		
-		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+	public JwtResponse loginAndGenerateToken(AuthResponse authResponse) {		
+		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authResponse.getUserName(), authResponse.getPassword()));
 		
-		if(authentication.isAuthenticated()) {
-			return jwtServiceImpl.generateToken(user.getUsername());
+		if(authentication.isAuthenticated()) {		
+			RefreshToken refreshToken = refreshTokenService.createRefreshToken(authResponse.getUserName());
+			return JwtResponse.builder()
+					.accessToken(jwtServiceImpl.generateToken(authResponse.getUserName()))
+					.token(refreshToken.getToken())
+					.build();			
 		}else {
-			logger.error("User Name Not Found for UserName is {}" ,user.getUsername());
+			logger.error("User Name Not Found for UserName is {}" ,authResponse.getUserName());
 			throw new UsernameNotFoundException("Invalid User Found!!");
 		}		
+	}
+
+	@Override
+	public JwtResponse generateRefreshToken(RefreshTokenResponse refreshTokenResponse) {
+		return refreshTokenService.findByToken(refreshTokenResponse.getToken())
+				.map(refreshTokenService::verifyExpiration)
+				.map(RefreshToken::getUser)
+				.map(user ->{
+					String accessToken = jwtServiceImpl.generateToken(user.getUsername());
+					return JwtResponse.builder()
+							.accessToken(accessToken)
+							.token(refreshTokenResponse.getToken()).build();
+				}).orElseThrow(() ->new RuntimeException("Refresh Token is not in DB..!!"));
+
+	}
+
+	@Override
+	public String logout(HttpServletRequest request) {
+		tokenBlackListService.addToBackList(request);
+		return "Log Out Successfull";
+	}
+
+	@Override
+	public Boolean checkBacklist(String token) {
+		return tokenBlackListService.isBackListed(token);
 	}
 
 }

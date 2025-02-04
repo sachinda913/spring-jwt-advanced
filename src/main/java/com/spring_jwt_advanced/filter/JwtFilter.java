@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.spring_jwt_advanced.service.JwtService;
+import com.spring_jwt_advanced.service.TokenBlackListService;
 import com.spring_jwt_advanced.serviceImpl.UserServiceMyImpl;
 
 import jakarta.servlet.FilterChain;
@@ -27,6 +28,9 @@ public class JwtFilter extends OncePerRequestFilter{
 	
 	@Autowired
 	ApplicationContext applicationContext;
+	
+	@Autowired
+	TokenBlackListService tokenBlackListService;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -44,7 +48,7 @@ public class JwtFilter extends OncePerRequestFilter{
 		if(userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 			UserDetails userDetails = applicationContext.getBean(UserServiceMyImpl.class).loadUserByUsername(userName);
 			
-			if(jwtService.validateToken(token,userDetails)) {
+			if(jwtService.validateToken(token,userDetails) && !tokenBlackListService.isBackListed(token)) {
 				UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
 				authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 				SecurityContextHolder.getContext().setAuthentication(authenticationToken);	
