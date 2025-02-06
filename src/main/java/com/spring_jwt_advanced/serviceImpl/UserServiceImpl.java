@@ -10,7 +10,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.spring_jwt_advanced.entity.RefreshToken;
 import com.spring_jwt_advanced.entity.Role;
 import com.spring_jwt_advanced.entity.User;
 import com.spring_jwt_advanced.repository.RoleRepository;
@@ -19,7 +18,6 @@ import com.spring_jwt_advanced.response.AuthResponse;
 import com.spring_jwt_advanced.response.JwtResponse;
 import com.spring_jwt_advanced.response.RefreshTokenResponse;
 import com.spring_jwt_advanced.response.UserResponse;
-import com.spring_jwt_advanced.service.RefreshTokenService;
 import com.spring_jwt_advanced.service.TokenBlackListService;
 import com.spring_jwt_advanced.service.UserService;
 
@@ -41,10 +39,7 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	private RoleRepository roleRepository;
-	
-	@Autowired
-	private RefreshTokenService refreshTokenService;
-	
+		
 	@Autowired
 	private TokenBlackListService tokenBlackListService;
 		
@@ -70,10 +65,9 @@ public class UserServiceImpl implements UserService{
 		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authResponse.getUserName(), authResponse.getPassword()));
 		
 		if(authentication.isAuthenticated()) {		
-			RefreshToken refreshToken = refreshTokenService.createRefreshToken(authResponse.getUserName());
 			return JwtResponse.builder()
-					.accessToken(jwtServiceImpl.generateToken(authResponse.getUserName()))
-					.token(refreshToken.getToken())
+					.accessToken(jwtServiceImpl.generateAccessToken(authResponse.getUserName()))
+					.refreshToken(jwtServiceImpl.generateRefreshToken(authResponse.getUserName()))
 					.build();			
 		}else {
 			logger.error("User Name Not Found for UserName is {}" ,authResponse.getUserName());
@@ -82,17 +76,18 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public JwtResponse generateRefreshToken(RefreshTokenResponse refreshTokenResponse) {
-		return refreshTokenService.findByToken(refreshTokenResponse.getToken())
-				.map(refreshTokenService::verifyExpiration)
-				.map(RefreshToken::getUser)
-				.map(user ->{
-					String accessToken = jwtServiceImpl.generateToken(user.getUsername());
-					return JwtResponse.builder()
-							.accessToken(accessToken)
-							.token(refreshTokenResponse.getToken()).build();
-				}).orElseThrow(() ->new RuntimeException("Refresh Token is not in DB..!!"));
-
+	public JwtResponse generateRefreshToken(RefreshTokenResponse refreshToken) {
+		
+		if(refreshToken.getToken() != null && !jwtServiceImpl.isTokenExpired(refreshToken.getToken())) {
+			logger.error("Refresh Token Is Expired");
+			return null;			
+		}		
+		String extractUserName = jwtServiceImpl.extractUserName(refreshToken.getToken());
+		
+		return JwtResponse.builder()
+				.accessToken(jwtServiceImpl.generateAccessToken(extractUserName))
+				.refreshToken(jwtServiceImpl.generateRefreshToken(extractUserName))
+				.build();
 	}
 
 	@Override

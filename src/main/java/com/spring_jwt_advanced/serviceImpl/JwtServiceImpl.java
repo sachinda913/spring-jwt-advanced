@@ -39,19 +39,32 @@ public class JwtServiceImpl implements JwtService{
 		}
 	}
 	
-	public String generateToken(String userName) {
+	public String generateAccessToken(String userName) {
 		Map<String, Object> claims = new HashMap<>();
 		return Jwts.builder()
 				.claims()
 				.add(claims)
 				.subject(userName)
 				.issuedAt(new Date(System.currentTimeMillis()))
-				.expiration(new Date(Constants.ACCESS_TOKEN_EXPIRY_SECONDS))
+				.expiration(new Date(System.currentTimeMillis() + (Constants.ACCESS_TOKEN_EXPIRY_SECONDS)))
 				.and()
 				.signWith(getkey())
 				.compact();
 	}
-
+	
+	public String generateRefreshToken(String userName) {
+		Map<String, Object> claims = new HashMap<>();
+		return Jwts.builder()
+				.claims()
+				.add(claims)
+				.subject(userName)
+				.issuedAt(new Date(System.currentTimeMillis()))
+				.expiration(new Date(System.currentTimeMillis() + (Constants.REFRESH_TOKEN_EXPIRY_SECONDS)))
+				.and()
+				.signWith(getkey())
+				.compact();		
+	}
+	
 	private SecretKey getkey() {
 		byte[] keyBytes = Decoders.BASE64.decode(secretKey);
 		return Keys.hmacShaKeyFor(keyBytes);
@@ -85,7 +98,7 @@ public class JwtServiceImpl implements JwtService{
 		return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
 	}
 
-	private boolean isTokenExpired(String token) {
+	public boolean isTokenExpired(String token) {
 		return extractExpirationFromClaims(token).before(new Date());
 	}
 	

@@ -53,8 +53,8 @@ public class UserController {
 	}
 	
 	@PostMapping("/refresh-token")
-	public JwtResponse generateRefreshToken(@RequestBody RefreshTokenResponse refreshTokenResponse) {
-		return userService.generateRefreshToken(refreshTokenResponse);
+	public JwtResponse generateRefreshToken(@RequestBody RefreshTokenResponse refreshToken) {
+		return userService.generateRefreshToken(refreshToken);
 	}
 	
 	@PostMapping("/log-out")

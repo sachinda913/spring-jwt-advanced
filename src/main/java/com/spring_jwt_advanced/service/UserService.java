@@ -15,10 +15,10 @@ public interface UserService {
 
 	JwtResponse loginAndGenerateToken(AuthResponse authResponse);
 
-	JwtResponse generateRefreshToken(RefreshTokenResponse refreshTokenResponse);
-
 	String logout(HttpServletRequest request);
 
 	Boolean checkBacklist(String token);
+
+	JwtResponse generateRefreshToken(RefreshTokenResponse refreshToken);
 
 }
