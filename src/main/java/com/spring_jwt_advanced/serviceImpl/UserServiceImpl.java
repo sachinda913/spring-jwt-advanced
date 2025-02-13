@@ -78,7 +78,7 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public JwtResponse generateRefreshToken(RefreshTokenResponse refreshToken) {
 		
-		if(refreshToken.getToken() != null && !jwtServiceImpl.isTokenExpired(refreshToken.getToken())) {
+		if(refreshToken.getToken() != null && jwtServiceImpl.isTokenExpired(refreshToken.getToken())) {
 			logger.error("Refresh Token Is Expired");
 			return null;			
 		}		

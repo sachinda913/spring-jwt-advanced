@@ -42,12 +42,10 @@ public class JwtServiceImpl implements JwtService{
 	public String generateAccessToken(String userName) {
 		Map<String, Object> claims = new HashMap<>();
 		return Jwts.builder()
-				.claims()
-				.add(claims)
+				.claims(claims)
 				.subject(userName)
 				.issuedAt(new Date(System.currentTimeMillis()))
 				.expiration(new Date(System.currentTimeMillis() + (Constants.ACCESS_TOKEN_EXPIRY_SECONDS)))
-				.and()
 				.signWith(getkey())
 				.compact();
 	}
@@ -55,12 +53,10 @@ public class JwtServiceImpl implements JwtService{
 	public String generateRefreshToken(String userName) {
 		Map<String, Object> claims = new HashMap<>();
 		return Jwts.builder()
-				.claims()
-				.add(claims)
+				.claims(claims)
 				.subject(userName)
 				.issuedAt(new Date(System.currentTimeMillis()))
 				.expiration(new Date(System.currentTimeMillis() + (Constants.REFRESH_TOKEN_EXPIRY_SECONDS)))
-				.and()
 				.signWith(getkey())
 				.compact();		
 	}
