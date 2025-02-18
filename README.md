@@ -79,8 +79,12 @@ mvn spring-boot:run
    ```json
    POST /api/auth/register  
    {
-     "username": "user1",
-     "password": "password123"
+     "username":"testOne",
+     "password":"testpsw",
+     "email":"test@gmail.com",
+     "firstname":"test",
+     "lastname":"one",
+     "roleId":1
    }
    ```
 
@@ -88,8 +92,8 @@ mvn spring-boot:run
    ```json
    POST /api/auth/login  
    {
-     "username": "user1",
-     "password": "password123"
+     "username": "testOne",
+     "password": "testpsw"
    }
    ```
    ✅ **Response:**
@@ -111,14 +115,17 @@ mvn spring-boot:run
 
 ## 🔒 Security & JWT Configuration
 
-- The JWT is generated using a **secret key** (`application.properties`):
-  ```properties
+- The JWT is generated using a **secret key**:
+  ```
   jwt.secret=your_secret_key
   jwt.expiration=3600000 # 1 hour in milliseconds
   ```
 - **Spring Security Configuration (`SecurityConfig.java`)**
-  - Defines authentication and authorization rules.  
-  - Allows `/api/auth/**` without authentication but secures other endpoints.  
+  - Defines authentication and authorization rules.
+  - Below APIS secures without authentication but secures other endpoints. 
+  - Allows `/userController/create-user`
+  - Allows `/userController/login-user` 
+  - Allows `/userController/refresh-token` 
 
 ---
 
