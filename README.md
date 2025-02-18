@@ -8,7 +8,7 @@ A Advanced Spring Boot application implementing **JWT-Advanced authentication**.
 
 ✅ **User Authentication** – Register, login, and secure endpoints using JWT.  
 ✅ **Spring Security Integration** – Role-based access control (RBAC).  
-✅ **JWT Token Handling** – Generate, validate, and refresh tokens.  
+✅ **JWT Token Handling** – Generate, validate, and refresh tokens and access tokens.  
 ✅ **Role-Based Authorization** – Users and Admins have different permissions.                                  
 ✅ **Token Blacklist** – Add expire tokens to redis token cache.  
 ✅ **RESTful API** – Secure API endpoints with authentication.  
@@ -70,14 +70,13 @@ mvn spring-boot:run
 
 | HTTP Method | Endpoint | Description |
 |------------|---------|-------------|
-| `GET` | `/api/users/profile` | Get user details |
-| `GET` | `/api/admin/dashboard` | Admin-only access |
+| `GET` | `/userController/get-test` | Admin-only access , Role name : "**Admin**"| 
 
 ### How to Test JWT Authentication?
 
 1. **Register a new user:**
    ```json
-   POST /api/auth/register  
+   POST /userController/create-user 
    {
      "username":"testOne",
      "password":"testpsw",
@@ -90,7 +89,7 @@ mvn spring-boot:run
 
 2. **Login to get a JWT Token:**
    ```json
-   POST /api/auth/login  
+   POST /userController/login-user
    {
      "username": "testOne",
      "password": "testpsw"
@@ -107,7 +106,9 @@ mvn spring-boot:run
 3. **Access Protected Endpoint:**
    Add the JWT token in the `Authorization` header:
    ```http
-   GET /api/users/profile  
+   GET /userController/get-test
+   GET /userController/log-out
+   GET /userController/check-backlist   
    Authorization: Bearer <JWT_TOKEN>
    ```
 
@@ -117,15 +118,20 @@ mvn spring-boot:run
 
 - The JWT is generated using a **secret key**:
   ```
-  jwt.secret=your_secret_key
-  jwt.expiration=3600000 # 1 hour in milliseconds
+  secret key is a BASE64 encoded key.
+  Access token key expiration is 1 * 60 * 2 * 1000; # 2 minutes.
+  Refresh token key expiration is 1 * 60 * 5 * 1000; # 5 minute.
   ```
 - **Spring Security Configuration (`SecurityConfig.java`)**
   - Defines authentication and authorization rules.
   - Below APIS secures without authentication but secures other endpoints. 
   - Allows `/userController/create-user`
   - Allows `/userController/login-user` 
-  - Allows `/userController/refresh-token` 
+  - Allows `/userController/refresh-token`
+  - only can test with **POSTMAN**
+  - if you want to check using browser uncomment "**formLogin**" in the SecurityConfig file.
+  - Only **Admin** role can access the '/userController/get-test' API.
+  - Add Data to **user_role** table before create the user, suggest name : **Admin**. 
 
 ---
 
